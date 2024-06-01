@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.SignalR;
 using PixelUno.Core.Services.Interfaces;
+using PixelUno.Shared.Exceptions;
 using PixelUno.Shared.ViewModels;
 using TakasakiStudio.Lina.Utils.Helpers;
 
@@ -23,18 +24,20 @@ public class GameHub(ILogger<GameHub> logger, ITableManagerService tableManagerS
         return Task.CompletedTask;
     }
 
-    public void SetUser(string name)
+    public void SetPlayerName(string name)
     {
         Context.Items.Add("player", new PlayerViewModel(IdBuilder.Generate(), name));
     }
     
-    public void CreateTable()
+    public string CreateTable()
     {
         if (!Context.Items.TryGetValue("player", out var value) || value is not PlayerViewModel player)
-            return;
+            throw new GameException("Player not found");
 
         var table = tableManagerService.CreateTable(player);
         
         Context.Items.Add("table", table);
+
+        return table.Id;
     }
 }
