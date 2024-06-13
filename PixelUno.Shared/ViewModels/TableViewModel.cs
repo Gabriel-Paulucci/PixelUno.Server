@@ -6,4 +6,5 @@ public class TableViewModel
     public IList<PlayerViewModel> Players { get; set; } = [];
     public bool Started { get; set; }
     public DeckViewModel Deck { get; } = new();
+    public int CardsToBuy { get; set; } = 0;
 }

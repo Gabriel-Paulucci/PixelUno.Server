@@ -72,4 +72,20 @@ public class GameHub(ILogger<GameHub> logger, IGameService gameService) : Hub<IG
             }
         }
     }
+
+    public async Task BuyCard()
+    {
+        var table = Context.Items.GetValue<TableViewModel>("Table");
+
+        if (table.CardsToBuy > 0)
+        {
+            for (var i = 0; i < table.CardsToBuy; i++)
+            {
+                await Clients.Client(Context.ConnectionId).AddCard(table.Deck.GetNextCard());
+            }
+            return;
+        }
+
+        await Clients.Client(Context.ConnectionId).AddCard(table.Deck.GetNextCard());
+    }
 }
