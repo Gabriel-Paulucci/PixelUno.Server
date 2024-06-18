@@ -1,4 +1,6 @@
-﻿namespace PixelUno.Shared.ViewModels;
+﻿using PixelUno.Shared.Enums;
+
+namespace PixelUno.Shared.ViewModels;
 
 public class TableViewModel
 {
@@ -7,4 +9,38 @@ public class TableViewModel
     public bool Started { get; set; }
     public DeckViewModel Deck { get; } = new();
     public int CardsToBuy { get; set; } = 0;
+    public CardViewModel? LastCard { get; set; }
+    
+    public bool CheckCard(CardViewModel card)
+    {
+        if (CardsToBuy > 0)
+        {
+            return card.Symbol switch
+            {
+                CardSymbol.Plus4 => true,
+                CardSymbol.Plus2 when LastCard?.Symbol == CardSymbol.Plus2 => true,
+                _ => false
+            };
+        }
+        
+        return LastCard is null ||
+               card.Color == CardColor.Wild ||
+               card.Color == LastCard.Color ||
+               card.Symbol == LastCard.Symbol;
+    }
+
+    public void AddCard(CardViewModel card)
+    {
+        switch (card)
+        {
+            case { Symbol: CardSymbol.Plus2 }:
+                CardsToBuy += 2;
+                break;
+            case { Symbol: CardSymbol.Plus4 }:
+                CardsToBuy += 4;
+                break;
+        }
+
+        LastCard = card;
+    }
 }

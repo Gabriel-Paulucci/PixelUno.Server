@@ -2,6 +2,7 @@
 using PixelUno.Core.Services.Interfaces;
 using PixelUno.Server.Extensions;
 using PixelUno.Server.Hubs.Interfaces;
+using PixelUno.Shared.Enums;
 using PixelUno.Shared.ViewModels;
 
 namespace PixelUno.Server.Hubs;
@@ -9,7 +10,7 @@ namespace PixelUno.Server.Hubs;
 public class GameHub(ILogger<GameHub> logger, IGameService gameService) : Hub<IGameHubClient>
 {
     private const int StartGameCard = 7;
-    
+
     public override Task OnConnectedAsync()
     {
         logger.LogInformation("Client connect: {Id}", Context.ConnectionId);
@@ -71,6 +72,16 @@ public class GameHub(ILogger<GameHub> logger, IGameService gameService) : Hub<IG
                 await Clients.Client(player.Id).AddCard(table.Deck.GetNextCard());
             }
         }
+
+        var card = table.Deck.GetNextCard();
+
+        if (card.Color == CardColor.Wild)
+            card.Color =
+                new List<CardColor>([CardColor.Blue, CardColor.Yellow, CardColor.Red, CardColor.Green])
+                    [new Random().Next(0, 4)];
+
+        table.LastCard = card;
+        await Clients.Group($"table:{table.Id}").PlayCard(card);
     }
 
     public async Task BuyCard()
@@ -83,9 +94,25 @@ public class GameHub(ILogger<GameHub> logger, IGameService gameService) : Hub<IG
             {
                 await Clients.Client(Context.ConnectionId).AddCard(table.Deck.GetNextCard());
             }
+
+            table.CardsToBuy = 0;
+            
             return;
         }
 
         await Clients.Client(Context.ConnectionId).AddCard(table.Deck.GetNextCard());
+    }
+
+    public bool CheckCard(CardViewModel card)
+    {
+        var table = Context.Items.GetValue<TableViewModel>("Table");
+        return table.CheckCard(card);
+    }
+
+    public async Task PlayingCard(CardViewModel card)
+    {
+        var table = Context.Items.GetValue<TableViewModel>("Table");
+        table.AddCard(card);
+        await Clients.Group($"table:{table.Id}").PlayCard(card);
     }
 }
