@@ -30,7 +30,7 @@ public class GameService(ITablesService tablesService) : IGameService
         if (table.Started)
             throw new GameException("O jogo ja começou");
         
-        table.Players.Add(player);
+        table.Players.AddLast(player);
 
         return table;
     }
@@ -38,5 +38,6 @@ public class GameService(ITablesService tablesService) : IGameService
     public void StartGame(TableViewModel table)
     {
         table.Started = true;
+        table.CurrentPlayer = table.Players.First;
     }
 }

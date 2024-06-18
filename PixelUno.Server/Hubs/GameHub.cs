@@ -115,4 +115,12 @@ public class GameHub(ILogger<GameHub> logger, IGameService gameService) : Hub<IG
         table.AddCard(card);
         await Clients.Group($"table:{table.Id}").PlayCard(card);
     }
+
+    public bool CanPlay()
+    {
+        var table = Context.Items.GetValue<TableViewModel>("Table");
+        var player = Context.Items.GetValue<PlayerViewModel>("Player");
+
+        return table.CurrentPlayer?.ValueRef == player;
+    }
 }
