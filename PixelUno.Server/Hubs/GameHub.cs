@@ -34,7 +34,7 @@ public class GameHub(ILogger<GameHub> logger, IGameService gameService) : Hub<IG
             Id = Context.ConnectionId,
             Name = name
         };
-        Context.Items.Add("Player", player);
+        Context.Items.Add(GameContextItems.Player, player);
         return player;
     }
 
@@ -44,24 +44,26 @@ public class GameHub(ILogger<GameHub> logger, IGameService gameService) : Hub<IG
         return table.Id;
     }
 
-    public async Task<IEnumerable<PlayerViewModel>> JoinTable(string tableId)
+    public async Task JoinTable(string tableId)
     {
-        var player = Context.Items.GetValue<PlayerViewModel>("Player");
+        var player = Context.Items.GetValue<PlayerViewModel>(GameContextItems.Player);
 
         var table = gameService.JoinTable(player, tableId);
-        Context.Items.Add("Table", table);
+        Context.Items.Add(GameContextItems.Table, table);
 
         var group = $"table:{table.Id}";
 
         await Groups.AddToGroupAsync(Context.ConnectionId, group);
         await Clients.GroupExcept(group, Context.ConnectionId).JoinPlayer(player);
-
-        return table.Players;
     }
 
     public async Task StartGame()
     {
-        var table = Context.Items.GetValue<TableViewModel>("Table");
+        var table = Context.Items.GetValue<TableViewModel>(GameContextItems.Table);
+        
+        if (table.Started)
+            return;
+        
         gameService.StartGame(table);
         await Clients.Group($"table:{table.Id}").Start();
 
@@ -86,7 +88,10 @@ public class GameHub(ILogger<GameHub> logger, IGameService gameService) : Hub<IG
 
     public async Task BuyCard()
     {
-        var table = Context.Items.GetValue<TableViewModel>("Table");
+        var table = Context.Items.GetValue<TableViewModel>(GameContextItems.Table);
+        
+        if (!table.Started)
+            return;
 
         if (table.CardsToBuy > 0)
         {
@@ -105,22 +110,34 @@ public class GameHub(ILogger<GameHub> logger, IGameService gameService) : Hub<IG
 
     public bool CheckCard(CardViewModel card)
     {
-        var table = Context.Items.GetValue<TableViewModel>("Table");
-        return table.CheckCard(card);
+        var table = Context.Items.GetValue<TableViewModel>(GameContextItems.Table);
+        
+        return table.Started && table.CheckCard(card);
     }
 
     public async Task PlayingCard(CardViewModel card)
     {
-        var table = Context.Items.GetValue<TableViewModel>("Table");
+        var table = Context.Items.GetValue<TableViewModel>(GameContextItems.Table);
+        
+        if (!table.Started)
+            return;
+        
         table.AddCard(card);
         await Clients.Group($"table:{table.Id}").PlayCard(card);
     }
 
     public bool CanPlay()
     {
-        var table = Context.Items.GetValue<TableViewModel>("Table");
-        var player = Context.Items.GetValue<PlayerViewModel>("Player");
+        var table = Context.Items.GetValue<TableViewModel>(GameContextItems.Table);
+        var player = Context.Items.GetValue<PlayerViewModel>(GameContextItems.Player);
 
         return table.CurrentPlayer?.ValueRef == player;
+    }
+
+    public IEnumerable<PlayerViewModel> GetPlayers()
+    {
+        var table = Context.Items.GetValue<TableViewModel>(GameContextItems.Table);
+
+        return table.Players;
     }
 }
