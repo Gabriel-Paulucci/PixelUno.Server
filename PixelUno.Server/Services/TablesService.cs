@@ -1,24 +1,24 @@
 ﻿using System.Collections.Concurrent;
-using PixelUno.Core.Services.Interfaces;
+using PixelUno.Server.Models;
+using PixelUno.Server.Services.Interfaces;
 using PixelUno.Shared.Exceptions;
-using PixelUno.Shared.ViewModels;
 using TakasakiStudio.Lina.AutoDependencyInjection;
 using TakasakiStudio.Lina.AutoDependencyInjection.Attributes;
 
-namespace PixelUno.Core.Services;
+namespace PixelUno.Server.Services;
 
 [Service<ITablesService>(LifeTime.Singleton)]
 public class TablesService : ITablesService
 {
-    private readonly ConcurrentDictionary<string, TableViewModel> _tables = [];
+    private readonly ConcurrentDictionary<string, Table> _tables = [];
 
-    public void AddTable(TableViewModel table)
+    public void AddTable(Table table)
     {
         if (!_tables.TryAdd(table.Id, table))
             throw new GameException("Fail create table");
     }
     
-    public TableViewModel? GetTable(string tableId)
+    public Table? GetTable(string tableId)
     {
         return _tables.GetValueOrDefault(tableId);
     }

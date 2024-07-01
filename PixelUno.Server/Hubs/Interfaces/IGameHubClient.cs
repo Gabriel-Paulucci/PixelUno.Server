@@ -8,4 +8,5 @@ public interface IGameHubClient
     Task Start();
     Task AddCard(CardViewModel card);
     Task PlayCard(CardViewModel card);
+    Task UpdatePlayerInfo(PlayerViewModel player);
 }

@@ -1,16 +1,15 @@
 ﻿using Microsoft.AspNetCore.SignalR;
-using PixelUno.Core.Services.Interfaces;
 using PixelUno.Server.Extensions;
 using PixelUno.Server.Hubs.Interfaces;
+using PixelUno.Server.Services.Interfaces;
 using PixelUno.Shared.Enums;
 using PixelUno.Shared.ViewModels;
 
 namespace PixelUno.Server.Hubs;
 
-public class GameHub(ILogger<GameHub> logger, IGameService gameService) : Hub<IGameHubClient>
+public class GameHub(ILogger<GameHub> logger, ITableService tableService, IPlayerService playerService)
+    : Hub<IGameHubClient>
 {
-    private const int StartGameCard = 7;
-
     public override Task OnConnectedAsync()
     {
         logger.LogInformation("Client connect: {Id}", Context.ConnectionId);
@@ -29,18 +28,16 @@ public class GameHub(ILogger<GameHub> logger, IGameService gameService) : Hub<IG
 
     public PlayerViewModel SetPlayerName(string name)
     {
-        var player = new PlayerViewModel
-        {
-            Id = Context.ConnectionId,
-            Name = name
-        };
+        var player = playerService.CreatePlayer(Context.ConnectionId, name);
+
         Context.Items.Add(GameContextItems.Player, player);
+
         return player;
     }
 
     public string CreateTable()
     {
-        var table = gameService.CreateTable();
+        var table = tableService.CreateTable();
         return table.Id;
     }
 
@@ -48,96 +45,64 @@ public class GameHub(ILogger<GameHub> logger, IGameService gameService) : Hub<IG
     {
         var player = Context.Items.GetValue<PlayerViewModel>(GameContextItems.Player);
 
-        var table = gameService.JoinTable(player, tableId);
+        var table = tableService.JoinTable(player, tableId);
         Context.Items.Add(GameContextItems.Table, table);
 
-        var group = $"table:{table.Id}";
-
-        await Groups.AddToGroupAsync(Context.ConnectionId, group);
-        await Clients.GroupExcept(group, Context.ConnectionId).JoinPlayer(player);
+        await Groups.AddToGroupAsync(Context.ConnectionId, table.ChannelName);
+        await Clients.GroupExcept(table.ChannelName, Context.ConnectionId).JoinPlayer(player);
     }
 
     public async Task StartGame()
     {
         var table = Context.Items.GetValue<TableViewModel>(GameContextItems.Table);
-        
-        if (table.Started)
-            return;
-        
-        gameService.StartGame(table);
-        await Clients.Group($"table:{table.Id}").Start();
 
-        foreach (var player in table.Players)
+        tableService.StartGame(table.Id);
+        await Clients.Group(table.ChannelName).Start();
+
+        foreach (var player in tableService.GetPlayers(table.Id))
         {
-            for (var i = 0; i < StartGameCard; i++)
+            foreach (var card in tableService.StartGameCards(table.Id))
             {
-                await Clients.Client(player.Id).AddCard(table.Deck.GetNextCard());
+                await Clients.Client(player.Id).AddCard(card);
             }
         }
 
-        var card = table.Deck.GetNextCard();
-
-        if (card.Color == CardColor.Wild)
-            card.Color =
-                new List<CardColor>([CardColor.Blue, CardColor.Yellow, CardColor.Red, CardColor.Green])
-                    [new Random().Next(0, 4)];
-
-        table.LastCard = card;
-        await Clients.Group($"table:{table.Id}").PlayCard(card);
+        var tableCard = tableService.GetInitialCard(table.Id);
+        await Clients.Group(table.ChannelName).PlayCard(tableCard);
     }
 
     public async Task BuyCard()
     {
         var table = Context.Items.GetValue<TableViewModel>(GameContextItems.Table);
-        
-        if (!table.Started)
-            return;
+        var player = Context.Items.GetValue<PlayerViewModel>(GameContextItems.Player);
 
-        if (table.CardsToBuy > 0)
+        foreach (var card in tableService.GetNextCards(table.Id, player))
         {
-            for (var i = 0; i < table.CardsToBuy; i++)
-            {
-                await Clients.Client(Context.ConnectionId).AddCard(table.Deck.GetNextCard());
-            }
-
-            table.CardsToBuy = 0;
-            
-            return;
+            await Clients.Client(Context.ConnectionId).AddCard(card);
         }
-
-        await Clients.Client(Context.ConnectionId).AddCard(table.Deck.GetNextCard());
     }
 
     public bool CheckCard(CardViewModel card)
     {
         var table = Context.Items.GetValue<TableViewModel>(GameContextItems.Table);
-        
-        return table.Started && table.CheckCard(card);
+        var player = Context.Items.GetValue<PlayerViewModel>(GameContextItems.Player);
+
+        return tableService.CheckCard(table.Id, player, card);
     }
 
     public async Task PlayingCard(CardViewModel card)
     {
         var table = Context.Items.GetValue<TableViewModel>(GameContextItems.Table);
-        
-        if (!table.Started)
-            return;
-        
-        table.AddCard(card);
-        await Clients.Group($"table:{table.Id}").PlayCard(card);
-    }
-
-    public bool CanPlay()
-    {
-        var table = Context.Items.GetValue<TableViewModel>(GameContextItems.Table);
         var player = Context.Items.GetValue<PlayerViewModel>(GameContextItems.Player);
 
-        return table.CurrentPlayer?.ValueRef == player;
+        tableService.PlayCard(table.Id, player, card);
+        await Clients.Group(table.ChannelName).PlayCard(card);
     }
 
     public IEnumerable<PlayerViewModel> GetPlayers()
     {
         var table = Context.Items.GetValue<TableViewModel>(GameContextItems.Table);
 
-        return table.Players;
+        return tableService.GetPlayers(table.Id);
     }
 }

@@ -7,8 +7,13 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\PixelUno.Core\PixelUno.Core.csproj" />
       <ProjectReference Include="..\PixelUno.Shared\PixelUno.Shared.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="TakasakiStudio.Lina.AutoDependencyInjection" Version="2.1.4" />
+      <PackageReference Include="TakasakiStudio.Lina.Database" Version="2.1.4" />
+      <PackageReference Include="TakasakiStudio.Lina.Utils" Version="2.1.4" />
     </ItemGroup>
 
 </Project>
