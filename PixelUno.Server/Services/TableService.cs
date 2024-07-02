@@ -41,7 +41,7 @@ public class TableService(ITablesService tablesService, IHubContext<GameHub, IGa
         return table;
     }
 
-    public void StartGame(string tableId)
+    public async Task StartGame(string tableId)
     {
         var table = tablesService.GetTable(tableId);
 
@@ -50,6 +50,19 @@ public class TableService(ITablesService tablesService, IHubContext<GameHub, IGa
 
         if (!table.StartGame())
             throw new GameException(GameExceptionMessages.GameStarted);
+        
+        await gameHub.Clients.Group(table.ChannelName).Start();
+        
+        foreach (var playerId in table.Players.Select(x => x.Id))
+        {
+            foreach (var card in await StartGameCards(table.Id, playerId))
+            {
+                await gameHub.Clients.Client(playerId).AddCard(card);
+            }
+        }
+        
+        var tableCard = GetInitialCard(table.Id);
+        await gameHub.Clients.Group(table.ChannelName).PlayCard(tableCard);
     }
 
     public IEnumerable<PlayerViewModel> GetPlayers(string tableId)
@@ -156,5 +169,8 @@ public class TableService(ITablesService tablesService, IHubContext<GameHub, IGa
         await gameHub.Clients.Group(table.ChannelName).UpdatePlayerInfo(player);
         await gameHub.Clients.Group(table.ChannelName)
             .TableNextSteps(actions.Select(x => new TableActionViewModel(x.Item1, x.Item2)));
+
+        if (player.Cards.Count == 0)
+            await gameHub.Clients.Group(table.ChannelName).EndGame(player);
     }
 }

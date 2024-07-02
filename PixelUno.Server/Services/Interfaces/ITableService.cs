@@ -6,7 +6,7 @@ public interface ITableService
 {
     TableViewModel CreateTable();
     TableViewModel JoinTable(PlayerViewModel player, string tableId);
-    void StartGame(string tableId);
+    Task StartGame(string tableId);
     IEnumerable<PlayerViewModel> GetPlayers(string tableId);
     Task<IEnumerable<CardViewModel>> GetNextCards(string tableId, string playerId);
     CardViewModel GetInitialCard(string tableId);

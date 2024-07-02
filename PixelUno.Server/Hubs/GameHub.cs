@@ -56,19 +56,7 @@ public class GameHub(ILogger<GameHub> logger, ITableService tableService, IPlaye
     {
         var table = Context.Items.GetValue<TableViewModel>(GameContextItems.Table);
 
-        tableService.StartGame(table.Id);
-        await Clients.Group(table.ChannelName).Start();
-
-        foreach (var playerId in tableService.GetPlayers(table.Id).Select(x => x.Id))
-        {
-            foreach (var card in await tableService.StartGameCards(table.Id, playerId))
-            {
-                await Clients.Client(playerId).AddCard(card);
-            }
-        }
-
-        var tableCard = tableService.GetInitialCard(table.Id);
-        await Clients.Group(table.ChannelName).PlayCard(tableCard);
+        await tableService.StartGame(table.Id);
     }
 
     public async Task BuyCard()

@@ -10,4 +10,5 @@ public interface IGameHubClient
     Task PlayCard(CardViewModel card);
     Task UpdatePlayerInfo(PlayerViewModel player);
     Task TableNextSteps(IEnumerable<TableActionViewModel> action);
+    Task EndGame(PlayerViewModel player);
 }

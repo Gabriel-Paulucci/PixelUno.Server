@@ -62,7 +62,7 @@ public class Table : BaseEntity<string>
 
     public List<(TableAction, Player)> AddCard(CardViewModel card)
     {
-        var actions = new List<(TableAction, Player)> { (TableAction.Ok, CurrentPlayer!.Value) };
+        var actions = new List<(TableAction, Player)> { (TableAction.Idle, CurrentPlayer!.Value) };
 
         switch (card)
         {
