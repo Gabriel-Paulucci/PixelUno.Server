@@ -8,9 +8,9 @@ public interface ITableService
     TableViewModel JoinTable(PlayerViewModel player, string tableId);
     void StartGame(string tableId);
     IEnumerable<PlayerViewModel> GetPlayers(string tableId);
-    IEnumerable<CardViewModel> GetNextCards(string tableId, PlayerViewModel player);
+    Task<IEnumerable<CardViewModel>> GetNextCards(string tableId, string playerId);
     CardViewModel GetInitialCard(string tableId);
-    IEnumerable<CardViewModel> StartGameCards(string tableId);
-    bool CheckCard(string tableId, PlayerViewModel player, CardViewModel card);
-    void PlayCard(string tableId, PlayerViewModel player, CardViewModel card);
+    Task<IEnumerable<CardViewModel>> StartGameCards(string tableId, string playerId);
+    bool CheckCard(string tableId, string playerId, CardViewModel card);
+    void PlayCard(string tableId, string playerId, CardViewModel card);
 }

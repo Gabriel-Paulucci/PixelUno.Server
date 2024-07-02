@@ -59,11 +59,11 @@ public class GameHub(ILogger<GameHub> logger, ITableService tableService, IPlaye
         tableService.StartGame(table.Id);
         await Clients.Group(table.ChannelName).Start();
 
-        foreach (var player in tableService.GetPlayers(table.Id))
+        foreach (var playerId in tableService.GetPlayers(table.Id).Select(x => x.Id))
         {
-            foreach (var card in tableService.StartGameCards(table.Id))
+            foreach (var card in await tableService.StartGameCards(table.Id, playerId))
             {
-                await Clients.Client(player.Id).AddCard(card);
+                await Clients.Client(playerId).AddCard(card);
             }
         }
 
@@ -76,7 +76,7 @@ public class GameHub(ILogger<GameHub> logger, ITableService tableService, IPlaye
         var table = Context.Items.GetValue<TableViewModel>(GameContextItems.Table);
         var player = Context.Items.GetValue<PlayerViewModel>(GameContextItems.Player);
 
-        foreach (var card in tableService.GetNextCards(table.Id, player))
+        foreach (var card in await tableService.GetNextCards(table.Id, player.Id))
         {
             await Clients.Client(Context.ConnectionId).AddCard(card);
         }
@@ -87,7 +87,7 @@ public class GameHub(ILogger<GameHub> logger, ITableService tableService, IPlaye
         var table = Context.Items.GetValue<TableViewModel>(GameContextItems.Table);
         var player = Context.Items.GetValue<PlayerViewModel>(GameContextItems.Player);
 
-        return tableService.CheckCard(table.Id, player, card);
+        return tableService.CheckCard(table.Id, player.Id, card);
     }
 
     public async Task PlayingCard(CardViewModel card)
@@ -95,7 +95,7 @@ public class GameHub(ILogger<GameHub> logger, ITableService tableService, IPlaye
         var table = Context.Items.GetValue<TableViewModel>(GameContextItems.Table);
         var player = Context.Items.GetValue<PlayerViewModel>(GameContextItems.Player);
 
-        tableService.PlayCard(table.Id, player, card);
+        tableService.PlayCard(table.Id, player.Id, card);
         await Clients.Group(table.ChannelName).PlayCard(card);
     }
 

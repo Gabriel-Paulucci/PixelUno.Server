@@ -15,7 +15,9 @@ public class Table : BaseEntity<string>
     public LinkedListNode<Player>? CurrentPlayer { get; set; }
 
     private bool _rightDirection = true;
-
+    
+    public string ChannelName => $"table:{Id}";
+    
     public Table()
     {
         Id = IdBuilder.Generate();
@@ -93,8 +95,13 @@ public class Table : BaseEntity<string>
             .Select(_ => Deck.GetNextCard());
     }
 
+    public Player GetPlayer(string playerId)
+    {
+        return Players.First(x => x.Id == playerId);
+    }
+    
     public static implicit operator TableViewModel(Table table)
     {
-        return new TableViewModel(table.Id);
+        return new TableViewModel(table.Id, table.ChannelName);
     }
 }

@@ -1,4 +1,7 @@
-﻿using PixelUno.Server.Models;
+﻿using Microsoft.AspNetCore.SignalR;
+using PixelUno.Server.Hubs;
+using PixelUno.Server.Hubs.Interfaces;
+using PixelUno.Server.Models;
 using PixelUno.Server.Services.Interfaces;
 using PixelUno.Shared.Constants;
 using PixelUno.Shared.Exceptions;
@@ -8,7 +11,7 @@ using TakasakiStudio.Lina.AutoDependencyInjection.Attributes;
 namespace PixelUno.Server.Services;
 
 [Service<ITableService>]
-public class TableService(ITablesService tablesService) : ITableService
+public class TableService(ITablesService tablesService, IHubContext<GameHub, IGameHubClient> gameHub) : ITableService
 {
     private const int StartGameCard = 7;
     
@@ -58,27 +61,39 @@ public class TableService(ITablesService tablesService) : ITableService
         return table.Players.Select(x => (PlayerViewModel)x);
     }
 
-    public IEnumerable<CardViewModel> GetNextCards(string tableId, PlayerViewModel player)
+    public async Task<IEnumerable<CardViewModel>> GetNextCards(string tableId, string playerId)
     {
         var table = tablesService.GetTable(tableId);
         
         if (table is null)
             throw new GameException(GameExceptionMessages.TableNotFound);
         
-        if (table.CurrentPlayer?.Value.Id != player.Id)
+        if (table.CurrentPlayer?.Value.Id != playerId)
             throw new GameException(GameExceptionMessages.NotYourTurn);
 
-        return table.NextCards(1).Select(x => (CardViewModel)x);
+        var cards = table.NextCards(1).ToList();
+        var player = table.GetPlayer(playerId);
+        player.AddCards(cards);
+
+        await gameHub.Clients.Group(table.ChannelName).UpdatePlayerInfo(player);
+        
+        return cards.Select(x => (CardViewModel)x);
     }
     
-    public IEnumerable<CardViewModel> StartGameCards(string tableId)
+    public async Task<IEnumerable<CardViewModel>> StartGameCards(string tableId, string playerId)
     {
         var table = tablesService.GetTable(tableId);
         
         if (table is null)
             throw new GameException(GameExceptionMessages.TableNotFound);
 
-        return table.NextCards(StartGameCard).Select(x => (CardViewModel)x);
+        var cards = table.NextCards(StartGameCard).ToList();
+        var player = table.GetPlayer(playerId);
+        player.AddCards(cards);
+
+        await gameHub.Clients.Group(table.ChannelName).UpdatePlayerInfo(player);
+        
+        return cards.Select(x => (CardViewModel)x);
     }
     
     public CardViewModel GetInitialCard(string tableId)
@@ -94,7 +109,7 @@ public class TableService(ITablesService tablesService) : ITableService
         return card;
     }
 
-    public bool CheckCard(string tableId, PlayerViewModel player, CardViewModel card)
+    public bool CheckCard(string tableId, string playerId, CardViewModel card)
     {
         var table = tablesService.GetTable(tableId);
         
@@ -104,13 +119,13 @@ public class TableService(ITablesService tablesService) : ITableService
         if (!table.Started)
             throw new GameException(GameExceptionMessages.GameNotStarted);
 
-        if (table.CurrentPlayer?.Value.Id != player.Id)
+        if (table.CurrentPlayer?.Value.Id != playerId)
             throw new GameException(GameExceptionMessages.NotYourTurn);
 
         return table.CheckCard(card);
     }
 
-    public void PlayCard(string tableId, PlayerViewModel player, CardViewModel card)
+    public void PlayCard(string tableId, string playerId, CardViewModel card)
     {
         var table = tablesService.GetTable(tableId);
         
@@ -120,7 +135,7 @@ public class TableService(ITablesService tablesService) : ITableService
         if (!table.Started)
             throw new GameException(GameExceptionMessages.GameNotStarted);
 
-        if (table.CurrentPlayer?.Value.Id != player.Id)
+        if (table.CurrentPlayer?.Value.Id != playerId)
             throw new GameException(GameExceptionMessages.NotYourTurn);
         
         table.AddCard(card);
