@@ -1,0 +1,9 @@
+﻿services:
+  server:
+    build:
+      context: .
+      dockerfile: PixelUno.Server/Dockerfile    
+    restart: always
+    container_name: pixeluno_server
+    ports:
+      - ${API_BINDING_IP}:${API_PORT}:8080

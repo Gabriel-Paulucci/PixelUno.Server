@@ -4,6 +4,7 @@
         <TargetFramework>net8.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
+        <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     </PropertyGroup>
 
     <ItemGroup>
@@ -14,6 +15,12 @@
       <PackageReference Include="TakasakiStudio.Lina.AutoDependencyInjection" Version="2.1.4" />
       <PackageReference Include="TakasakiStudio.Lina.Database" Version="2.1.4" />
       <PackageReference Include="TakasakiStudio.Lina.Utils" Version="2.1.4" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Content Include="..\.dockerignore">
+        <Link>.dockerignore</Link>
+      </Content>
     </ItemGroup>
 
 </Project>
