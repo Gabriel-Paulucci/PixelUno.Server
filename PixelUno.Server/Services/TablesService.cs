@@ -22,4 +22,9 @@ public class TablesService : ITablesService
     {
         return _tables.GetValueOrDefault(tableId);
     }
+
+    public void Remove(string tableId)
+    {
+        _tables.Remove(tableId, out _);
+    }
 }

@@ -6,4 +6,5 @@ public interface ITablesService
 {
     void AddTable(Table table);
     Table? GetTable(string tableId);
+    void Remove(string tableId);
 }

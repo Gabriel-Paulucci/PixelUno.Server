@@ -34,9 +34,8 @@ public class TableService(ITablesService tablesService, IHubContext<GameHub, IGa
 
         if (table.Started)
             throw new GameException(GameExceptionMessages.GameStarted);
-
-        if (!table.AddPlayer(player))
-            throw new GameException(GameExceptionMessages.FullGame);
+        
+        table.AddPlayer(player);
 
         return table;
     }
@@ -172,5 +171,16 @@ public class TableService(ITablesService tablesService, IHubContext<GameHub, IGa
 
         if (player.Cards.Count == 0)
             await gameHub.Clients.Group(table.ChannelName).EndGame(player);
+    }
+
+    public async Task Destroy(string tableId)
+    {
+        var table = tablesService.GetTable(tableId);
+
+        if (table is null)
+            throw new GameException(GameExceptionMessages.TableNotFound);
+
+        await gameHub.Clients.Group(table.ChannelName).Clear();
+        tablesService.Remove(tableId);
     }
 }

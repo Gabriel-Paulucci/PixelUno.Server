@@ -23,13 +23,9 @@ public class Table : BaseEntity<string>
         Id = IdBuilder.Generate();
     }
 
-    public bool AddPlayer(PlayerViewModel player)
+    public void AddPlayer(PlayerViewModel player)
     {
-        if (Players.Count >= 4)
-            return false;
-
         Players.AddLast(player);
-        return true;
     }
 
     public bool StartGame()

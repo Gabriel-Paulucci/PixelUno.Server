@@ -11,4 +11,5 @@ public interface IGameHubClient
     Task UpdatePlayerInfo(PlayerViewModel player);
     Task TableNextSteps(IEnumerable<TableActionViewModel> action);
     Task EndGame(PlayerViewModel player);
+    Task Clear();
 }

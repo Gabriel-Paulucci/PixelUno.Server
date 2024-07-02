@@ -46,6 +46,7 @@ public class GameHub(ILogger<GameHub> logger, ITableService tableService, IPlaye
         var player = Context.Items.GetValue<PlayerViewModel>(GameContextItems.Player);
 
         var table = tableService.JoinTable(player, tableId);
+        Context.Items.Remove(GameContextItems.Table);
         Context.Items.Add(GameContextItems.Table, table);
 
         await Groups.AddToGroupAsync(Context.ConnectionId, table.ChannelName);
@@ -91,5 +92,13 @@ public class GameHub(ILogger<GameHub> logger, ITableService tableService, IPlaye
         var table = Context.Items.GetValue<TableViewModel>(GameContextItems.Table);
 
         return tableService.GetPlayers(table.Id);
+    }
+
+    public async Task Leave()
+    {
+        var table = Context.Items.GetValue<TableViewModel>(GameContextItems.Table);
+
+        await tableService.Destroy(table.Id);
+        await Groups.RemoveFromGroupAsync(Context.ConnectionId, table.ChannelName);
     }
 }
