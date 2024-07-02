@@ -7,3 +7,9 @@
     container_name: pixeluno_server
     ports:
       - ${API_BINDING_IP}:${API_PORT}:8080
+  tunnel:
+    image: cloudflare/cloudflared
+    restart: unless-stopped
+    command: tunnel run
+    environment:
+      - TUNNEL_TOKEN=${TUNNEL_TOKEN}
