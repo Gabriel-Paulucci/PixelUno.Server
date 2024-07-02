@@ -95,8 +95,7 @@ public class GameHub(ILogger<GameHub> logger, ITableService tableService, IPlaye
         var table = Context.Items.GetValue<TableViewModel>(GameContextItems.Table);
         var player = Context.Items.GetValue<PlayerViewModel>(GameContextItems.Player);
 
-        tableService.PlayCard(table.Id, player.Id, card);
-        await Clients.Group(table.ChannelName).PlayCard(card);
+        await tableService.PlayCard(table.Id, player.Id, card);
     }
 
     public IEnumerable<PlayerViewModel> GetPlayers()

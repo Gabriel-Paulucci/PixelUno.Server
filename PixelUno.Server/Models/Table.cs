@@ -15,9 +15,9 @@ public class Table : BaseEntity<string>
     public LinkedListNode<Player>? CurrentPlayer { get; set; }
 
     private bool _rightDirection = true;
-    
+
     public string ChannelName => $"table:{Id}";
-    
+
     public Table()
     {
         Id = IdBuilder.Generate();
@@ -60,8 +60,10 @@ public class Table : BaseEntity<string>
                card.Symbol == LastCard.Symbol;
     }
 
-    public void AddCard(CardViewModel card)
+    public List<(TableAction, Player)> AddCard(CardViewModel card)
     {
+        var actions = new List<(TableAction, Player)> { (TableAction.Ok, CurrentPlayer!.Value) };
+
         switch (card)
         {
             case { Symbol: CardSymbol.Plus2 }:
@@ -75,11 +77,15 @@ public class Table : BaseEntity<string>
                 break;
             case { Symbol: CardSymbol.Block }:
                 CurrentPlayer = GetNextPlayer();
+                actions.Add((TableAction.Block, CurrentPlayer!.Value));
                 break;
         }
 
         CurrentPlayer = GetNextPlayer();
+        actions.Add((TableAction.Playing, CurrentPlayer!.Value));
+        actions.Add((TableAction.Next, GetNextPlayer()!.Value));
         LastCard = card;
+        return actions;
     }
 
     private LinkedListNode<Player>? GetNextPlayer()
@@ -95,11 +101,16 @@ public class Table : BaseEntity<string>
             .Select(_ => Deck.GetNextCard());
     }
 
+    public void ResetBuyCards()
+    {
+        CardsToBuy = 0;
+    }
+
     public Player GetPlayer(string playerId)
     {
         return Players.First(x => x.Id == playerId);
     }
-    
+
     public static implicit operator TableViewModel(Table table)
     {
         return new TableViewModel(table.Id, table.ChannelName);

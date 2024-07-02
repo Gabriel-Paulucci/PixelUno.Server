@@ -12,5 +12,5 @@ public interface ITableService
     CardViewModel GetInitialCard(string tableId);
     Task<IEnumerable<CardViewModel>> StartGameCards(string tableId, string playerId);
     bool CheckCard(string tableId, string playerId, CardViewModel card);
-    void PlayCard(string tableId, string playerId, CardViewModel card);
+    Task PlayCard(string tableId, string playerId, CardViewModel card);
 }

@@ -11,7 +11,7 @@ namespace PixelUno.Server.Services;
 public class TablesService : ITablesService
 {
     private readonly ConcurrentDictionary<string, Table> _tables = [];
-
+    
     public void AddTable(Table table)
     {
         if (!_tables.TryAdd(table.Id, table))

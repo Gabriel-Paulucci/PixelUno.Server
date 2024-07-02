@@ -28,11 +28,14 @@ public class Card : BaseEntity<string>
 
     public static implicit operator CardViewModel(Card card)
     {
-        return new CardViewModel(card.Color, card.Symbol);
+        return new CardViewModel(card.Id, card.Color, card.Symbol);
     }
 
     public static implicit operator Card(CardViewModel model)
     {
-        return new Card(model.Color, model.Symbol);
+        return new Card(model.Color, model.Symbol)
+        {
+            Id = model.Id
+        };
     }
 }

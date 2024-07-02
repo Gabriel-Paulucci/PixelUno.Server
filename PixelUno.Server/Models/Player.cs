@@ -21,6 +21,16 @@ public class Player : BaseEntity<string>
         Cards.AddRange(cards);
     }
 
+    public bool HasCard(Card card)
+    {
+        return Cards.Exists(x => x.Id == card.Id);
+    }
+
+    public void RemoveCard(Card card)
+    {
+        Cards.RemoveAll(x => x.Id == card.Id);
+    }
+
     public static implicit operator PlayerViewModel(Player player)
     {
         return new PlayerViewModel(player.Id, player.Name, player.Cards.Count);

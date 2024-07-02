@@ -2,4 +2,4 @@
 
 namespace PixelUno.Shared.ViewModels;
 
-public record CardViewModel(CardColor Color, CardSymbol Symbol);
+public record CardViewModel(string Id, CardColor Color, CardSymbol Symbol);

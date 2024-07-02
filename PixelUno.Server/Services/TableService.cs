@@ -6,6 +6,7 @@ using PixelUno.Server.Services.Interfaces;
 using PixelUno.Shared.Constants;
 using PixelUno.Shared.Exceptions;
 using PixelUno.Shared.ViewModels;
+using TakasakiStudio.Lina.AutoDependencyInjection;
 using TakasakiStudio.Lina.AutoDependencyInjection.Attributes;
 
 namespace PixelUno.Server.Services;
@@ -14,13 +15,13 @@ namespace PixelUno.Server.Services;
 public class TableService(ITablesService tablesService, IHubContext<GameHub, IGameHubClient> gameHub) : ITableService
 {
     private const int StartGameCard = 7;
-    
+
     public TableViewModel CreateTable()
     {
         var table = new Table();
-        
+
         tablesService.AddTable(table);
-        
+
         return table;
     }
 
@@ -33,7 +34,7 @@ public class TableService(ITablesService tablesService, IHubContext<GameHub, IGa
 
         if (table.Started)
             throw new GameException(GameExceptionMessages.GameStarted);
-        
+
         if (!table.AddPlayer(player))
             throw new GameException(GameExceptionMessages.FullGame);
 
@@ -43,10 +44,10 @@ public class TableService(ITablesService tablesService, IHubContext<GameHub, IGa
     public void StartGame(string tableId)
     {
         var table = tablesService.GetTable(tableId);
-        
+
         if (table is null)
             throw new GameException(GameExceptionMessages.TableNotFound);
-        
+
         if (!table.StartGame())
             throw new GameException(GameExceptionMessages.GameStarted);
     }
@@ -54,7 +55,7 @@ public class TableService(ITablesService tablesService, IHubContext<GameHub, IGa
     public IEnumerable<PlayerViewModel> GetPlayers(string tableId)
     {
         var table = tablesService.GetTable(tableId);
-        
+
         if (table is null)
             throw new GameException(GameExceptionMessages.TableNotFound);
 
@@ -64,26 +65,27 @@ public class TableService(ITablesService tablesService, IHubContext<GameHub, IGa
     public async Task<IEnumerable<CardViewModel>> GetNextCards(string tableId, string playerId)
     {
         var table = tablesService.GetTable(tableId);
-        
+
         if (table is null)
             throw new GameException(GameExceptionMessages.TableNotFound);
-        
+
         if (table.CurrentPlayer?.Value.Id != playerId)
             throw new GameException(GameExceptionMessages.NotYourTurn);
 
         var cards = table.NextCards(1).ToList();
+        table.ResetBuyCards();
         var player = table.GetPlayer(playerId);
         player.AddCards(cards);
 
         await gameHub.Clients.Group(table.ChannelName).UpdatePlayerInfo(player);
-        
+
         return cards.Select(x => (CardViewModel)x);
     }
-    
+
     public async Task<IEnumerable<CardViewModel>> StartGameCards(string tableId, string playerId)
     {
         var table = tablesService.GetTable(tableId);
-        
+
         if (table is null)
             throw new GameException(GameExceptionMessages.TableNotFound);
 
@@ -92,14 +94,14 @@ public class TableService(ITablesService tablesService, IHubContext<GameHub, IGa
         player.AddCards(cards);
 
         await gameHub.Clients.Group(table.ChannelName).UpdatePlayerInfo(player);
-        
+
         return cards.Select(x => (CardViewModel)x);
     }
-    
+
     public CardViewModel GetInitialCard(string tableId)
     {
         var table = tablesService.GetTable(tableId);
-        
+
         if (table is null)
             throw new GameException(GameExceptionMessages.TableNotFound);
 
@@ -112,32 +114,47 @@ public class TableService(ITablesService tablesService, IHubContext<GameHub, IGa
     public bool CheckCard(string tableId, string playerId, CardViewModel card)
     {
         var table = tablesService.GetTable(tableId);
-        
+
         if (table is null)
             throw new GameException(GameExceptionMessages.TableNotFound);
-        
+
         if (!table.Started)
             throw new GameException(GameExceptionMessages.GameNotStarted);
 
         if (table.CurrentPlayer?.Value.Id != playerId)
             throw new GameException(GameExceptionMessages.NotYourTurn);
-
+        
+        var player = table.GetPlayer(playerId);
+        if (!player.HasCard(card))
+            throw new GameException(GameExceptionMessages.NotHaveACard);
+        
         return table.CheckCard(card);
     }
 
-    public void PlayCard(string tableId, string playerId, CardViewModel card)
+    public async Task PlayCard(string tableId, string playerId, CardViewModel card)
     {
         var table = tablesService.GetTable(tableId);
-        
+
         if (table is null)
             throw new GameException(GameExceptionMessages.TableNotFound);
-        
+
         if (!table.Started)
             throw new GameException(GameExceptionMessages.GameNotStarted);
 
         if (table.CurrentPlayer?.Value.Id != playerId)
             throw new GameException(GameExceptionMessages.NotYourTurn);
+
+        var player = table.GetPlayer(playerId);
+
+        if (!player.HasCard(card))
+            throw new GameException(GameExceptionMessages.NotHaveACard);
+
+        player.RemoveCard(card);
+        var actions = table.AddCard(card);
         
-        table.AddCard(card);
+        await gameHub.Clients.Group(table.ChannelName).PlayCard(card);
+        await gameHub.Clients.Group(table.ChannelName).UpdatePlayerInfo(player);
+        await gameHub.Clients.Group(table.ChannelName)
+            .TableNextSteps(actions.Select(x => new TableActionViewModel(x.Item1, x.Item2)));
     }
 }
