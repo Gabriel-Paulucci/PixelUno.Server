@@ -25,6 +25,14 @@ public class Table : BaseEntity<string>
 
     public void AddPlayer(PlayerViewModel player)
     {
+        var possiblePlayer = Players.FirstOrDefault(x => x.Name == player.Name);
+
+        if (possiblePlayer is not null)
+        {
+            possiblePlayer.Id = player.Id;
+            return;
+        }
+        
         Players.AddLast(player);
     }
 
@@ -105,6 +113,16 @@ public class Table : BaseEntity<string>
     public Player GetPlayer(string playerId)
     {
         return Players.First(x => x.Id == playerId);
+    }
+
+    public bool CheckPlayer(Player player)
+    {
+        var hasPlayer = Players.Any(x => x.Name == player.Name);
+
+        if (Started && hasPlayer)
+            return true;
+
+        return !Started || hasPlayer;
     }
 
     public static implicit operator TableViewModel(Table table)

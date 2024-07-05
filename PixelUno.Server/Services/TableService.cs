@@ -32,8 +32,8 @@ public class TableService(ITablesService tablesService, IHubContext<GameHub, IGa
         if (table is null)
             throw new GameException(GameExceptionMessages.TableNotFound);
 
-        if (table.Started)
-            throw new GameException(GameExceptionMessages.GameStarted);
+        if (!table.CheckPlayer(player))
+            throw new GameException(GameExceptionMessages.NotAbleToJoin);
         
         table.AddPlayer(player);
 
@@ -182,5 +182,28 @@ public class TableService(ITablesService tablesService, IHubContext<GameHub, IGa
 
         await gameHub.Clients.Group(table.ChannelName).Clear();
         tablesService.Remove(tableId);
+    }
+
+    public IEnumerable<CardViewModel> GetMyCards(string tableId, string playerId)
+    {
+        var table = tablesService.GetTable(tableId);
+
+        if (table is null)
+            throw new GameException(GameExceptionMessages.TableNotFound);
+        
+        var player = table.GetPlayer(playerId);
+        var cards = player.Cards;
+
+        return cards.Select(x => (CardViewModel)x);
+    }
+
+    public bool AlreadyStarted(string tableId)
+    {
+        var table = tablesService.GetTable(tableId);
+
+        if (table is null)
+            throw new GameException(GameExceptionMessages.TableNotFound);
+        
+        return table.Started;
     }
 }

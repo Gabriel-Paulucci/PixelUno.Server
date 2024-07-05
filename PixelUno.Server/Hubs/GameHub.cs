@@ -101,4 +101,19 @@ public class GameHub(ILogger<GameHub> logger, ITableService tableService, IPlaye
         await tableService.Destroy(table.Id);
         await Groups.RemoveFromGroupAsync(Context.ConnectionId, table.ChannelName);
     }
+
+    public IEnumerable<CardViewModel> GetMyCards()
+    {
+        var table = Context.Items.GetValue<TableViewModel>(GameContextItems.Table);
+        var player = Context.Items.GetValue<PlayerViewModel>(GameContextItems.Player);
+
+        return tableService.GetMyCards(table.Id, player.Id);
+    }
+
+    public bool AlreadyStarted()
+    {
+        var table = Context.Items.GetValue<TableViewModel>(GameContextItems.Table);
+
+        return tableService.AlreadyStarted(table.Id);
+    }
 }

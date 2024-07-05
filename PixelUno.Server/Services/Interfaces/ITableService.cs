@@ -14,4 +14,6 @@ public interface ITableService
     bool CheckCard(string tableId, string playerId, CardViewModel card);
     Task PlayCard(string tableId, string playerId, CardViewModel card);
     Task Destroy(string tableId);
+    IEnumerable<CardViewModel> GetMyCards(string tableId, string playerId);
+    bool AlreadyStarted(string tableId);
 }

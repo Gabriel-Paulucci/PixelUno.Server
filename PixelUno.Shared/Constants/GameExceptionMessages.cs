@@ -8,4 +8,5 @@ public static class GameExceptionMessages
     public const string FullGame = "O jogo esta cheio";
     public const string NotYourTurn = "Não é sua vez";
     public const string NotHaveACard = "Voçê não tem a carta";
+    public const string NotAbleToJoin = "Não é possivel entrar na sala";
 }
