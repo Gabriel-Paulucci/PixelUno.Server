@@ -45,7 +45,7 @@ public class GameHub(ILogger<GameHub> logger, ITableService tableService, IPlaye
     {
         var player = Context.Items.GetValue<PlayerViewModel>(GameContextItems.Player);
 
-        var (table, alreadyExists) = tableService.JoinTable(player, tableId);
+        var (table, alreadyExists) = await tableService.JoinTable(player, tableId);
         Context.Items.Remove(GameContextItems.Table);
         Context.Items.Add(GameContextItems.Table, table);
 

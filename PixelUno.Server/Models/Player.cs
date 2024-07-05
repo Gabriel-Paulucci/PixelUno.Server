@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using PixelUno.Shared.Enums;
 using PixelUno.Shared.ViewModels;
 using TakasakiStudio.Lina.Database.Models;
 
@@ -8,6 +9,7 @@ public class Player : BaseEntity<string>
 {
     public required string Name { get; set; }
     public List<Card> Cards { get; set; } = [];
+    public TableAction Action { get; set; } = TableAction.Idle;
     
     [SetsRequiredMembers]
     public Player(string id, string name)
@@ -33,11 +35,14 @@ public class Player : BaseEntity<string>
 
     public static implicit operator PlayerViewModel(Player player)
     {
-        return new PlayerViewModel(player.Id, player.Name, player.Cards.Count);
+        return new PlayerViewModel(player.Id, player.Name, player.Cards.Count, player.Action);
     }
 
     public static implicit operator Player(PlayerViewModel model)
     {
-        return new Player(model.Id, model.Name);
+        return new Player(model.Id, model.Name)
+        {
+            Action = model.Action
+        };
     }
 }

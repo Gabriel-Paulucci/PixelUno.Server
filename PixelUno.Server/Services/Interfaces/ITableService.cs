@@ -1,11 +1,12 @@
-﻿using PixelUno.Shared.ViewModels;
+﻿using PixelUno.Server.Models;
+using PixelUno.Shared.ViewModels;
 
 namespace PixelUno.Server.Services.Interfaces;
 
 public interface ITableService
 {
     TableViewModel CreateTable();
-    (TableViewModel, bool) JoinTable(PlayerViewModel player, string tableId);
+    Task<(TableViewModel table, bool alreadyExists)> JoinTable(PlayerViewModel player, string tableId);
     Task StartGame(string tableId);
     IEnumerable<PlayerViewModel> GetPlayers(string tableId);
     Task<IEnumerable<CardViewModel>> GetNextCards(string tableId, string playerId);

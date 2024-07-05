@@ -1,3 +1,5 @@
-﻿namespace PixelUno.Shared.ViewModels;
+﻿using PixelUno.Shared.Enums;
 
-public record PlayerViewModel(string Id, string Name, int CardAmount);
+namespace PixelUno.Shared.ViewModels;
+
+public record PlayerViewModel(string Id, string Name, int CardAmount, TableAction Action);

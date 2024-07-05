@@ -44,6 +44,8 @@ public class Table : BaseEntity<string>
 
         Started = true;
         CurrentPlayer = Players.First;
+        CurrentPlayer!.Value.Action = TableAction.Playing;
+        GetNextPlayer()!.Value.Action = TableAction.Next;
         return true;
     }
 
@@ -65,9 +67,9 @@ public class Table : BaseEntity<string>
                card.Symbol == LastCard.Symbol;
     }
 
-    public List<(TableAction, Player)> AddCard(CardViewModel card)
+    public void AddCard(CardViewModel card)
     {
-        var actions = new List<(TableAction, Player)> { (TableAction.Idle, CurrentPlayer!.Value) };
+        CurrentPlayer!.Value.Action = TableAction.Idle;
 
         switch (card)
         {
@@ -78,19 +80,19 @@ public class Table : BaseEntity<string>
                 CardsToBuy += 4;
                 break;
             case { Symbol: CardSymbol.Reverse }:
+                GetNextPlayer()!.Value.Action = TableAction.Idle;
                 _rightDirection = !_rightDirection;
                 break;
             case { Symbol: CardSymbol.Block }:
                 CurrentPlayer = GetNextPlayer();
-                actions.Add((TableAction.Block, CurrentPlayer!.Value));
+                CurrentPlayer!.Value.Action = TableAction.Block;
                 break;
         }
 
         CurrentPlayer = GetNextPlayer();
-        actions.Add((TableAction.Playing, CurrentPlayer!.Value));
-        actions.Add((TableAction.Next, GetNextPlayer()!.Value));
+        CurrentPlayer!.Value.Action = TableAction.Playing;
+        GetNextPlayer()!.Value.Action = TableAction.Next;
         LastCard = card;
-        return actions;
     }
 
     private LinkedListNode<Player>? GetNextPlayer()
