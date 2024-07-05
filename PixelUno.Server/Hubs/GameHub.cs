@@ -45,12 +45,14 @@ public class GameHub(ILogger<GameHub> logger, ITableService tableService, IPlaye
     {
         var player = Context.Items.GetValue<PlayerViewModel>(GameContextItems.Player);
 
-        var table = tableService.JoinTable(player, tableId);
+        var (table, alreadyExists) = tableService.JoinTable(player, tableId);
         Context.Items.Remove(GameContextItems.Table);
         Context.Items.Add(GameContextItems.Table, table);
 
         await Groups.AddToGroupAsync(Context.ConnectionId, table.ChannelName);
-        await Clients.GroupExcept(table.ChannelName, Context.ConnectionId).JoinPlayer(player);
+
+        if (!alreadyExists)
+            await Clients.GroupExcept(table.ChannelName, Context.ConnectionId).JoinPlayer(player);
     }
 
     public async Task StartGame()
@@ -115,5 +117,12 @@ public class GameHub(ILogger<GameHub> logger, ITableService tableService, IPlaye
         var table = Context.Items.GetValue<TableViewModel>(GameContextItems.Table);
 
         return tableService.AlreadyStarted(table.Id);
+    }
+
+    public CardViewModel? GetTableCard()
+    {
+        var table = Context.Items.GetValue<TableViewModel>(GameContextItems.Table);
+
+        return tableService.GetTableCard(table.Id);
     }
 }

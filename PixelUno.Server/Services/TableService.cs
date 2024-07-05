@@ -25,7 +25,7 @@ public class TableService(ITablesService tablesService, IHubContext<GameHub, IGa
         return table;
     }
 
-    public TableViewModel JoinTable(PlayerViewModel player, string tableId)
+    public (TableViewModel, bool) JoinTable(PlayerViewModel player, string tableId)
     {
         var table = tablesService.GetTable(tableId);
 
@@ -35,9 +35,9 @@ public class TableService(ITablesService tablesService, IHubContext<GameHub, IGa
         if (!table.CheckPlayer(player))
             throw new GameException(GameExceptionMessages.NotAbleToJoin);
         
-        table.AddPlayer(player);
+        var alreadyExists = table.AddPlayer(player);
 
-        return table;
+        return (table, alreadyExists);
     }
 
     public async Task StartGame(string tableId)
@@ -205,5 +205,15 @@ public class TableService(ITablesService tablesService, IHubContext<GameHub, IGa
             throw new GameException(GameExceptionMessages.TableNotFound);
         
         return table.Started;
+    }
+
+    public CardViewModel? GetTableCard(string tableId)
+    {
+        var table = tablesService.GetTable(tableId);
+
+        if (table is null)
+            throw new GameException(GameExceptionMessages.TableNotFound);
+
+        return table.LastCard is null ? null : (CardViewModel)table.LastCard;
     }
 }

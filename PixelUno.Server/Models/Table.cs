@@ -23,17 +23,18 @@ public class Table : BaseEntity<string>
         Id = IdBuilder.Generate();
     }
 
-    public void AddPlayer(PlayerViewModel player)
+    public bool AddPlayer(PlayerViewModel player)
     {
         var possiblePlayer = Players.FirstOrDefault(x => x.Name == player.Name);
 
         if (possiblePlayer is not null)
         {
             possiblePlayer.Id = player.Id;
-            return;
+            return true;
         }
         
         Players.AddLast(player);
+        return false;
     }
 
     public bool StartGame()
