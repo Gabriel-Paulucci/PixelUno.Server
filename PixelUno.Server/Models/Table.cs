@@ -102,15 +102,24 @@ public class Table : BaseEntity<string>
             : CurrentPlayer?.Previous ?? Players.Last;
     }
 
+    public IEnumerable<Card> BuyCards()
+    {
+        if (CardsToBuy <= 0) 
+            return [Deck.GetNextCard()];
+        
+        var cards = Enumerable.Range(0, CardsToBuy).Select(_ => Deck.GetNextCard());
+        CardsToBuy = 0;
+        CurrentPlayer!.Value.Action = TableAction.Block;
+        CurrentPlayer = GetNextPlayer();
+        CurrentPlayer!.Value.Action = TableAction.Playing;
+        GetNextPlayer()!.Value.Action = TableAction.Next;
+
+        return cards;
+    }
+    
     public IEnumerable<Card> NextCards(int amount)
     {
-        return (CardsToBuy > 0 ? Enumerable.Range(0, CardsToBuy) : Enumerable.Range(0, amount))
-            .Select(_ => Deck.GetNextCard());
-    }
-
-    public void ResetBuyCards()
-    {
-        CardsToBuy = 0;
+        return Enumerable.Range(0, amount).Select(_ => Deck.GetNextCard());
     }
 
     public Player GetPlayer(string playerId)

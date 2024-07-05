@@ -88,7 +88,7 @@ public class TableService(ITablesService tablesService, IHubContext<GameHub, IGa
         return table.Players.Select(x => (PlayerViewModel)x);
     }
 
-    public async Task<IEnumerable<CardViewModel>> GetNextCards(string tableId, string playerId)
+    public async Task<IEnumerable<CardViewModel>> BuyCards(string tableId, string playerId)
     {
         var table = tablesService.GetTable(tableId);
 
@@ -98,12 +98,14 @@ public class TableService(ITablesService tablesService, IHubContext<GameHub, IGa
         if (table.CurrentPlayer?.Value.Id != playerId)
             throw new GameException(GameExceptionMessages.NotYourTurn);
 
-        var cards = table.NextCards(1).ToList();
-        table.ResetBuyCards();
+        var cards = table.BuyCards().ToList();
         var player = table.GetPlayer(playerId);
         player.AddCards(cards);
-
-        await gameHub.Clients.Group(table.ChannelName).UpdatePlayerInfo(player);
+        
+        foreach (var playerInfo in table.Players)
+        {
+            await gameHub.Clients.Group(table.ChannelName).UpdatePlayerInfo(playerInfo);
+        }
 
         return cards.Select(x => (CardViewModel)x);
     }

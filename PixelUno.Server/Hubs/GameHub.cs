@@ -67,7 +67,7 @@ public class GameHub(ILogger<GameHub> logger, ITableService tableService, IPlaye
         var table = Context.Items.GetValue<TableViewModel>(GameContextItems.Table);
         var player = Context.Items.GetValue<PlayerViewModel>(GameContextItems.Player);
 
-        foreach (var card in await tableService.GetNextCards(table.Id, player.Id))
+        foreach (var card in await tableService.BuyCards(table.Id, player.Id))
         {
             await Clients.Client(Context.ConnectionId).AddCard(card);
         }
